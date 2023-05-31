@@ -41,6 +41,39 @@ not specified by Kubernetes via CRI.
 
 After modifying this config, you need to restart the `containerd` service.
 
+### Configure Docker Hub Credentials Example
+
+You may want to configure Docker Hub credentials to pull images from Docker Hub.
+This allows you to pull public and private images from Docker Hub without hitting rate limits.
+
+To configure Docker Hub credentials, create/modify `/etc/containerd/certs.d/registry-1.docker.io/hosts.toml` as follows:
+
+```toml
+server = "https://docker.io"
+
+[host."https://registry-1.docker.io"]
+  capabilities = ["pull", "resolve"]
+```
+
+Then, modify `/etc/containerd/config.toml` as follows:
+
+```toml
+[plugins."io.containerd.grpc.v1.cri".registry]
+config_path = "/etc/containerd/certs.d"
+
+[plugins."io.containerd.grpc.v1.cri".registry.configs."registry-1.docker.io".auth]
+username = "example-username"
+password = "example-password"
+```
+
+> Docker [access tokens](https://docs.docker.com/docker-hub/access-tokens/) are supported. These are passwords that start with `dckr_pat_`.
+
+Finally, restart the `containerd` service: `sudo systemctl restart containerd`.
+
+Verify your configuration: `crictl info` 
+
+Verify that you can pull images from Docker Hub: `crictl pull busybox`
+
 ### Configure Registry Credentials Example - GCR with Service Account Key Authentication
 
 If you don't already have Google Container Registry (GCR) set-up then you need to do the following steps:
